@@ -1,0 +1,61 @@
+/* PostForm.css */
+
+.post-form {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.post-form div {
+    margin-bottom: 15px;
+}
+
+.post-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.post-form input[type="text"],
+.post-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.post-form textarea {
+    height: 150px;
+}
+
+.post-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.post-form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.post-form-actions button:hover {
+    background-color: #0056b3;
+}
+
+.post-form-actions button[type="button"] {
+    background-color: #dc3545;
+}
+
+.post-form-actions button[type="button"]:hover {
+    background-color: #c82333;
+}
