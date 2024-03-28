@@ -1,127 +1,66 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchPosts,
+  createNewPost,
+  updateExistingPost,
+  deleteExistingPost,
+  setSelectedPost,
+  closeEditPopup,
+  setEditTitle,
+  setFilteredPosts,
+  setEditBody,
+} from "../../slices/postSlice";
+// import { toast } from "react-toastify";
 import PostForm from "../PostForm/PostForm";
 import "./PostList.css";
 
 const PostList = ({ user, searchTerm }) => {
-  const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editBody, setEditBody] = useState("");
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
+  const dispatch = useDispatch();
+
+  const {
+    items: posts,
+    filteredItems,
+    isLoading,
+    isEditing,
+    selectedPost,
+    editTitle,
+    editBody,
+    showLoadingAnimation,
+  } = useSelector((state) => state.posts);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setShowLoadingAnimation(true); // Show loading animation
-
-      try {
-        const response = await axios.get(
-          "https://jsonplaceholder.typicode.com/posts"
-        );
-        setPosts(response.data);
-        setFilteredPosts(response.data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        setIsLoading(false);
-        toast.error("Failed to fetch posts");
-      }
-
-      setShowLoadingAnimation(false); // Hide loading animation
-    };
-
-    fetchPosts();
-  }, []);
+    dispatch(fetchPosts());
+  }, [dispatch]);
 
   useEffect(() => {
-    const filtered = posts.filter((post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPosts(filtered);
-  }, [searchTerm, posts]);
+    dispatch(setFilteredPosts(searchTerm));
+  }, [searchTerm, dispatch]);
 
   const handleCreatePost = async (newPost) => {
-    setShowLoadingAnimation(true); // Show loading animation
-
-    try {
-      const response = await axios.post(
-        "https://jsonplaceholder.typicode.com/posts",
-        newPost
-      );
-      setPosts([...posts, response.data]);
-      setFilteredPosts([...filteredPosts, response.data]);
-      toast.success("Post created successfully");
-    } catch (error) {
-      console.error("Error creating post:", error);
-      toast.error("Failed to create post");
-    }
-
-    setShowLoadingAnimation(false); // Hide loading animation
+    dispatch(createNewPost(newPost));
   };
 
   const handleUpdatePost = async (e) => {
     e.preventDefault();
-    setShowLoadingAnimation(true); // Show loading animation
-
-    try {
-      const response = await axios.put(
-        `https://jsonplaceholder.typicode.com/posts/${selectedPost.id}`,
-        {
-          ...selectedPost,
-          title: editTitle,
-          body: editBody,
-        }
-      );
-      const updatedPosts = posts.map((post) =>
-        post.id === selectedPost.id ? response.data : post
-      );
-      setPosts(updatedPosts);
-      setFilteredPosts(updatedPosts);
-      toast.success("Post updated successfully");
-      closeEditPopup();
-    } catch (error) {
-      console.error("Error updating post:", error);
-      closeEditPopup();
-    }
-
-    setShowLoadingAnimation(false); // Hide loading animation
+    const updatedPost = {
+      ...selectedPost,
+      title: editTitle,
+      body: editBody,
+    };
+    dispatch(updateExistingPost(updatedPost));
   };
 
   const handleDeletePost = async (postId) => {
-    setShowLoadingAnimation(true); // Show loading animation
-
-    try {
-      await axios.delete(
-        `https://jsonplaceholder.typicode.com/posts/${postId}`
-      );
-      const updatedPosts = posts.filter((post) => post.id !== postId);
-      setPosts(updatedPosts);
-      setFilteredPosts(updatedPosts);
-      toast.success("Post deleted successfully");
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("Failed to delete post");
-    }
-
-    setShowLoadingAnimation(false); // Hide loading animation
+    dispatch(deleteExistingPost(postId));
   };
 
   const openEditPopup = (post) => {
-    setSelectedPost(post);
-    setEditTitle(post.title);
-    setEditBody(post.body);
-    setIsEditing(true);
+    dispatch(setSelectedPost(post));
   };
 
-  const closeEditPopup = () => {
-    setIsEditing(false);
-    setSelectedPost(null);
-    setEditTitle("");
-    setEditBody("");
+  const closeEditPopupLocal = () => {
+    dispatch(closeEditPopup());
   };
 
   return (
@@ -134,7 +73,7 @@ const PostList = ({ user, searchTerm }) => {
         </div>
       ) : (
         <ul className="post-list">
-          {filteredPosts.map((post) => (
+          {filteredItems.map((post) => (
             <li key={post.id} className="post-item">
               <div className="post-details">
                 <h3>{post.title}</h3>
@@ -160,7 +99,7 @@ const PostList = ({ user, searchTerm }) => {
                 <input
                   type="text"
                   value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
+                  onChange={(e) => dispatch(setEditTitle(e.target.value))}
                   required
                 />
               </div>
@@ -168,13 +107,13 @@ const PostList = ({ user, searchTerm }) => {
                 <label>Body:</label>
                 <textarea
                   value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
+                  onChange={(e) => dispatch(setEditBody(e.target.value))}
                   required
                 ></textarea>
               </div>
               <div className="form-actions">
                 <button type="submit">Update</button>
-                <button type="button" onClick={closeEditPopup}>
+                <button type="button" onClick={closeEditPopupLocal}>
                   Cancel
                 </button>
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,49 +7,41 @@ import {
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Provider, useSelector, useDispatch } from "react-redux";
+import store from "./store/store";
 import Header from "./components/Header/Header";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import PostList from "./components/PostList/PostList";
+import { loginUser, logoutUser } from "../src/slices/userSlice"; // <-- Importing loginUser and logoutUser
 import "./App.css";
 
 const useAuthentication = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const dispatch = useDispatch(); // <-- Defining dispatch here
+  const { isAuthenticated, user } = useSelector((state) => state.user);
 
   const handleLogin = (userData) => {
     try {
-      // Here, you should validate the email and password with stored user data
       const storedUser = JSON.parse(localStorage.getItem("user"));
       if (
         storedUser.email === userData.email &&
         storedUser.password === userData.password
       ) {
-        setIsAuthenticated(true);
-        setUser(userData);
+        dispatch(loginUser(userData)); // <-- Dispatching loginUser
+        localStorage.setItem("user", JSON.stringify(userData));
       } else {
         throw new Error("Invalid email or password");
       }
     } catch (error) {
       console.error("Error setting authentication data:", error);
-      setIsAuthenticated(false);
-      setUser(null);
+      dispatch(logoutUser()); // <-- Dispatching logoutUser
     }
   };
 
   const handleLogout = () => {
     try {
       localStorage.removeItem("user");
-      setIsAuthenticated(false);
-      setUser(null);
+      dispatch(logoutUser()); // <-- Dispatching logoutUser
     } catch (error) {
       console.error("Error removing user data:", error);
     }
@@ -66,52 +58,55 @@ const App = () => {
   const handleSearch = (term) => {
     setSearchTerm(term);
   };
+
   return (
-    <Router>
-      <div className="app">
-        <Header
-          isAuthenticated={isAuthenticated}
-          onLogout={handleLogout}
-          onSearch={handleSearch}
-        />
-        <div className="content">
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/posts" />
-                ) : (
-                  <Login onLogin={handleLogin} />
-                )
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/posts" />
-                ) : (
-                  <Register onRegister={handleLogin} />
-                )
-              }
-            />
-            <Route
-              path="/posts"
-              element={
-                isAuthenticated ? (
-                  <PostList user={user} searchTerm={searchTerm} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route path="/" element={<Navigate to="/register" />} />
-          </Routes>
+    <Provider store={store}>
+      <Router>
+        <div className="app">
+          <Header
+            isAuthenticated={isAuthenticated}
+            onLogout={handleLogout}
+            onSearch={handleSearch}
+          />
+          <div className="content">
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  isAuthenticated ? (
+                    <Navigate to="/posts" />
+                  ) : (
+                    <Login onLogin={handleLogin} />
+                  )
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  isAuthenticated ? (
+                    <Navigate to="/posts" />
+                  ) : (
+                    <Register onRegister={handleLogin} />
+                  )
+                }
+              />
+              <Route
+                path="/posts"
+                element={
+                  isAuthenticated ? (
+                    <PostList user={user} searchTerm={searchTerm} />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+              <Route path="/" element={<Navigate to="/register" />} />
+            </Routes>
+          </div>
+          <ToastContainer />
         </div>
-        <ToastContainer />
-      </div>
-    </Router>
+      </Router>
+    </Provider>
   );
 };
 
